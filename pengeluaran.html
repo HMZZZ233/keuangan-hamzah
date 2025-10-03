@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catat Pengeluaran - Manage Your Money!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta property="og:title" content="Manage Money - Pengeluaran">
+    <meta property="og:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://manage-money.vercel.app/pengeluaran">
+    <meta property="og:image" content="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Manage Money - Pengeluaran">
+    <meta name="twitter:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
+    <meta name="twitter:image" content="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png">
+    <link rel="icon" href="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png" type="image/png">
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        .overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .emoji-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen font-sans">
+    <!-- Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 p-6">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">Menu</h2>
+            <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="space-y-4">
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl bg-red-50 border-2 border-red-200">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-minus-circle text-red-600 text-xl"></i>
+                </div>
+                <span class="text-red-700 font-medium">Catat Pengeluaran</span>
+            </a>
+            
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-green-50 transition-colors group">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200">
+                    <i class="fas fa-plus-circle text-green-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Catat Pemasukan</span>
+            </a>
+            
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-purple-50 transition-colors group">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">AI Atur Pengeluaran</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Header -->
+    <header class="relative z-30">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <button id="menuToggle" class="bg-white rounded-xl p-3 shadow-lg hover:shadow-xl transition-shadow">
+                    <i class="fas fa-bars text-blue-600 text-xl"></i>
+                </button>
+                
+                <div class="flex items-center space-x-3">
+                    <img src="https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064" alt="Money" class="emoji-icon">
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                        Manage Your Money!
+                    </h1>
+                </div>
+                
+                <div class="w-16"></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-4">
+                <img src="https://emojiisland.com/cdn/shop/products/Crying_Emoji_Icon_2_grande.png?v=1571606091" alt="Crying" class="w-12 h-12" onerror="this.src=''; this.alt='😢'; this.style.fontSize='48px'; this.style.display='inline-block';">
+                <h2 class="text-4xl font-bold text-gray-800">Catat Pengeluaran</h2>
+            </div>
+            <button id="addExpenseBtn" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-xl transition-all transform hover:scale-105">
+                <i class="fas fa-plus mr-2"></i>Tambah Data
+            </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Pengeluaran</p>
+                        <p id="totalExpense" class="text-2xl font-bold text-red-600">Rp 0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-wallet text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Jumlah Transaksi</p>
+                        <p id="totalTransactions" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-list text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Rata-rata per Hari</p>
+                        <p id="averageDaily" class="text-2xl font-bold text-purple-600">Rp 0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-20">
+            <div class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-receipt text-gray-400 text-4xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-600 mb-4">Belum Ada Data Pengeluaran</h3>
+            <p class="text-gray-500 mb-8">Mulai catat pengeluaran Anda untuk melacak keuangan dengan lebih baik</p>
+            <button onclick="openExpenseModal()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-xl transition-all">
+                <i class="fas fa-plus mr-2"></i>Tambah Pengeluaran Pertama
+            </button>
+        </div>
+
+        <!-- Expense List -->
+        <div id="expenseContainer" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Daftar Pengeluaran</h3>
+                <div class="flex space-x-2">
+                    <button id="sortByDate" class="px-4 py-2 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors">
+                        <i class="fas fa-calendar mr-1"></i>Tanggal
+                    </button>
+                    <button id="sortByAmount" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-money-bill mr-1"></i>Jumlah
+                    </button>
+                </div>
+            </div>
+            
+            <div id="expenseList" class="space-y-4">
+                <!-- Expense cards will be added here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Expense Modal -->
+    <div id="expenseModal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md transform scale-95 transition-transform">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800">Tambah Pengeluaran</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="expenseForm" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-tag mr-2 text-red-500"></i>Nama Barang/Kegiatan
+                    </label>
+                    <input type="text" id="itemName" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Contoh: Makan siang">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-money-bill mr-2 text-green-500"></i>Harga
+                    </label>
+                    <input type="number" id="itemPrice" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="25000">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-calendar mr-2 text-blue-500"></i>Tanggal
+                    </label>
+                    <input type="date" id="itemDate" required class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-medium mb-2">
+                        <i class="fas fa-sticky-note mr-2 text-yellow-500"></i>Catatan (Opsional)
+                    </label>
+                    <textarea id="itemNote" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Tambahkan catatan jika diperlukan..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                    <i class="fas fa-save mr-2"></i>Simpan Pengeluaran
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
+        const expenseModal = document.getElementById('expenseModal');
+        const addExpenseBtn = document.getElementById('addExpenseBtn');
+        const closeModal = document.getElementById('closeModal');
+        const expenseForm = document.getElementById('expenseForm');
+        const emptyState = document.getElementById('emptyState');
+        const expenseContainer = document.getElementById('expenseContainer');
+        const expenseList = document.getElementById('expenseList');
+        
+        let expenses = [];
+        let currentSort = 'date';
+        
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebarFunc() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        function openExpenseModal() {
+            expenseModal.classList.add('active');
+            expenseModal.querySelector('.bg-white').style.transform = 'scale(1)';
+            document.getElementById('itemDate').value = new Date().toISOString().split('T')[0];
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeExpenseModal() {
+            expenseModal.classList.remove('active');
+            expenseModal.querySelector('.bg-white').style.transform = 'scale(0.95)';
+            expenseForm.reset();
+            document.body.style.overflow = 'auto';
+        }
+        
+        function addExpense(expense) {
+            expenses.push({
+                id: Date.now(),
+                ...expense
+            });
+            saveExpenses();
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            updateSummary();
+            if (expenses.length === 0) {
+                emptyState.classList.remove('hidden');
+                expenseContainer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                expenseContainer.classList.remove('hidden');
+                renderExpenses();
+            }
+        }
+        
+        function updateSummary() {
+            const total = expenses.reduce((sum, expense) => sum + expense.price, 0);
+            const count = expenses.length;
+            const average = count > 0 ? Math.round(total / count) : 0;
+            
+            document.getElementById('totalExpense').textContent = `Rp ${formatNumber(total)}`;
+            document.getElementById('totalTransactions').textContent = count;
+            document.getElementById('averageDaily').textContent = `Rp ${formatNumber(average)}`;
+        }
+        
+        function sortExpenses(type) {
+            currentSort = type;
+            if (type === 'date') {
+                expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+                document.getElementById('sortByDate').classList.add('bg-blue-100', 'text-blue-600');
+                document.getElementById('sortByDate').classList.remove('bg-gray-100', 'text-gray-600');
+                document.getElementById('sortByAmount').classList.add('bg-gray-100', 'text-gray-600');
+                document.getElementById('sortByAmount').classList.remove('bg-blue-100', 'text-blue-600');
+            } else {
+                expenses.sort((a, b) => b.price - a.price);
+                document.getElementById('sortByAmount').classList.add('bg-blue-100', 'text-blue-600');
+                document.getElementById('sortByAmount').classList.remove('bg-gray-100', 'text-gray-600');
+                document.getElementById('sortByDate').classList.add('bg-gray-100', 'text-gray-600');
+                document.getElementById('sortByDate').classList.remove('bg-blue-100', 'text-blue-600');
+            }
+            renderExpenses();
+        }
+        
+        function renderExpenses() {
+            expenseList.innerHTML = '';
+            expenses.forEach((expense) => {
+                const expenseCard = document.createElement('div');
+                expenseCard.className = 'bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer card-hover';
+                expenseCard.onclick = () => showExpenseDetail(expense);
+                
+                const categoryIcon = getCategoryIcon(expense.name);
+                
+                expenseCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center">
+                                <i class="${categoryIcon} text-red-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-800">${expense.name}</h4>
+                                <p class="text-gray-500 text-sm">
+                                    <i class="fas fa-calendar mr-1"></i>${formatDate(expense.date)}
+                                </p>
+                                ${expense.note ? `<p class="text-gray-400 text-xs mt-1"><i class="fas fa-sticky-note mr-1"></i>${expense.note.substring(0, 30)}${expense.note.length > 30 ? '...' : ''}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-red-600">Rp ${formatNumber(expense.price)}</div>
+                            <div class="text-gray-400 text-sm flex items-center justify-end mt-1">
+                                <i class="fas fa-eye mr-1"></i>Klik untuk detail
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                expenseList.appendChild(expenseCard);
+            });
+        }
+        
+        function getCategoryIcon(itemName) {
+            const name = itemName.toLowerCase();
+            if (name.includes('makan') || name.includes('makanan') || name.includes('nasi') || name.includes('burger')) {
+                return 'fas fa-utensils';
+            } else if (name.includes('transport') || name.includes('bensin') || name.includes('ojek') || name.includes('bus')) {
+                return 'fas fa-car';
+            } else if (name.includes('belanja') || name.includes('baju') || name.includes('sepatu')) {
+                return 'fas fa-shopping-bag';
+            } else if (name.includes('obat') || name.includes('dokter') || name.includes('rumah sakit')) {
+                return 'fas fa-pills';
+            } else if (name.includes('listrik') || name.includes('air') || name.includes('internet')) {
+                return 'fas fa-bolt';
+            } else {
+                return 'fas fa-shopping-cart';
+            }
+        }
+        
+        function showExpenseDetail(expense) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+            modal.innerHTML = `
+                <div class="bg-white rounded-3xl p-8 w-full max-w-md">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800">Detail Pengeluaran</h3>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove(); document.body.style.overflow='auto';" class="text-gray-500 hover:text-gray-700 text-2xl">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                <i class="${getCategoryIcon(expense.name)} text-red-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Nama Barang</div>
+                                <div class="font-bold text-gray-800 text-lg">${expense.name}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 p-4 bg-green-50 rounded-xl">
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-money-bill text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Harga</div>
+                                <div class="font-bold text-gray-800 text-lg">Rp ${formatNumber(expense.price)}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4 p-4 bg-blue-50 rounded-xl">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-calendar text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Tanggal</div>
+                                <div class="font-bold text-gray-800 text-lg">${formatDate(expense.date)}</div>
+                            </div>
+                        </div>
+                        
+                        ${expense.note ? `
+                        <div class="flex items-start space-x-4 p-4 bg-yellow-50 rounded-xl">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-sticky-note text-yellow-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Catatan</div>
+                                <div class="font-semibold text-gray-800">${expense.note}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <button onclick="deleteExpense(${expense.id}); this.parentElement.parentElement.parentElement.remove(); document.body.style.overflow='auto';" class="w-full bg-red-500 text-white py-3 rounded-xl font-semibold hover:bg-red-600 transition-colors">
+                            <i class="fas fa-trash mr-2"></i>Hapus Pengeluaran
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function deleteExpense(id) {
+            expenses = expenses.filter(expense => expense.id !== id);
+            saveExpenses();
+            updateDisplay();
+        }
+        
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        // LocalStorage functions
+        function saveExpenses() {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        function loadExpenses() {
+            const stored = localStorage.getItem('expenses');
+            if (stored) {
+                expenses = JSON.parse(stored);
+            }
+        }
+        
+        // Event Listeners
+        menuToggle.addEventListener('click', openSidebar);
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+        overlay.addEventListener('click', closeSidebarFunc);
+        addExpenseBtn.addEventListener('click', openExpenseModal);
+        closeModal.addEventListener('click', closeExpenseModal);
+        
+        document.getElementById('sortByDate').addEventListener('click', () => sortExpenses('date'));
+        document.getElementById('sortByAmount').addEventListener('click', () => sortExpenses('amount'));
+
+        // Navigasi sidebar
+        const sidebarLinks = document.querySelectorAll('#sidebar nav a');
+        if (sidebarLinks.length >= 2) {
+            sidebarLinks[0].addEventListener('click', () => window.location.href = '/pengeluaran');
+            sidebarLinks[1].addEventListener('click', () => window.location.href = '/pemasukan');
+        }
+        
+        expenseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const expense = {
+                name: document.getElementById('itemName').value,
+                price: parseInt(document.getElementById('itemPrice').value),
+                date: document.getElementById('itemDate').value,
+                note: document.getElementById('itemNote').value
+            };
+            
+            addExpense(expense);
+            closeExpenseModal();
+        });
+        
+        // Close modals on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebarFunc();
+                closeExpenseModal();
+            }
+        });
+        
+        // Initialize
+        loadExpenses();
+        updateDisplay();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'988cfd9b0395b5e7',t:'MTc1OTUwMDI4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
