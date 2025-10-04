@@ -101,6 +101,13 @@
                 </div>
                 <span class="text-gray-700 font-medium">AI Atur Pengeluaran</span>
             </a>
+
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-blue-50 transition-colors group">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200">
+                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Cetak Laporan</span>
+            </a>
         </nav>
     </div>
     
@@ -247,6 +254,9 @@
             });
             sidebarLinks[2].addEventListener("click", function () {
                 window.location.href = "/ai";
+            });
+            sidebarLinks[3].addEventListener("click", function () {
+                window.location.href = "/laporan"
             });
         }
         const menuToggle = document.getElementById("menuToggle");
