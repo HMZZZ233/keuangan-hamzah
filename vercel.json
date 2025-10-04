@@ -1,5 +1,6 @@
 {
     "rewrites": [
+        { "source": "/laporan", "destination": "/laporan.html"},
         { "source": "/ai", "destination": "/ai.html"},
         { "source": "/pengeluaran", "destination": "/pengeluaran.html" },
         { "source": "/pemasukan", "destination": "/pemasukan.html" },
