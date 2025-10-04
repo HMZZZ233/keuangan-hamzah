@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Laporan - Manage Your Money!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        .overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .emoji-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        
+        .folder-emoji {
+            width: 48px;
+            height: 48px;
+            display: inline-block;
+        }
+        
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-popup {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.8);
+            transition: all 0.4s ease;
+        }
+        
+        .success-popup.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 3;
+            stroke: #10b981;
+            stroke-miterlimit: 10;
+            margin: 0 auto;
+            box-shadow: inset 0px 0px 0px #10b981;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+        }
+        
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: #10b981;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        
+        @keyframes stroke {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        @keyframes scale {
+            0%, 100% {
+                transform: none;
+            }
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
+        }
+        
+        @keyframes fill {
+            100% {
+                box-shadow: inset 0px 0px 0px 30px #10b981;
+            }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen font-sans">
+    <!-- Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 p-6">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">Menu</h2>
+            <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="space-y-4">
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-red-50 transition-colors group">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200">
+                    <i class="fas fa-minus-circle text-red-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Catat Pengeluaran</span>
+            </a>
+            
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-green-50 transition-colors group">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200">
+                    <i class="fas fa-plus-circle text-green-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Catat Pemasukan</span>
+            </a>
+            
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-purple-50 transition-colors group">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">AI Atur Pengeluaran</span>
+            </a>
+            
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl bg-blue-50 border-2 border-blue-200">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                </div>
+                <span class="text-blue-700 font-medium">Cetak Laporan</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Header -->
+    <header class="relative z-30">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <button id="menuToggle" class="bg-white rounded-xl p-3 shadow-lg hover:shadow-xl transition-shadow">
+                    <i class="fas fa-bars text-blue-600 text-xl"></i>
+                </button>
+                
+                <div class="flex items-center space-x-3">
+                    <img src="https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064" alt="Money" class="emoji-icon" onerror="this.src=''; this.alt='💰'; this.style.fontSize='24px';">
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                        Manage Your Money!
+                    </h1>
+                </div>
+                
+                <div class="w-16"></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="text-center mb-12">
+            <div class="flex items-center justify-center space-x-4 mb-6">
+                <img src="https://em-content.zobj.net/source/apple/96/file-folder_1f4c1.png" alt="Folder" class="folder-emoji floating-animation" onerror="this.src=''; this.alt='📁'; this.style.fontSize='48px';">
+                <h2 class="text-4xl font-bold gradient-text">
+                    Cetak Laporan
+                </h2>
+            </div>
+            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                Ekspor data keuangan Anda dalam berbagai format untuk analisis dan dokumentasi yang lebih baik
+            </p>
+        </div>
+
+        <!-- Report Generator Card -->
+        <div class="max-w-4xl mx-auto">
+            <div class="glassmorphism rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg">
+                <!-- Header Card -->
+                <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-8 text-white text-center">
+                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4 pulse-glow">
+                        <i class="fas fa-chart-bar text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Report Generator 2025</h3>
+                    <p class="text-blue-100">Teknologi terdepan untuk ekspor data keuangan</p>
+                </div>
+
+                <!-- Form Section -->
+                <div class="p-8 bg-white bg-opacity-80">
+                    <form id="reportForm" class="space-y-8">
+                        <!-- Data Selection -->
+                        <div class="space-y-4">
+                            <label class="block text-gray-700 font-bold text-lg">
+                                <i class="fas fa-database mr-3 text-indigo-500"></i>Pilih Data yang Akan Dicetak
+                            </label>
+                            <select id="dataSelect" required class="w-full px-6 py-4 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition-all text-lg bg-white">
+                                <option value="">Pilih jenis data...</option>
+                            </select>
+                        </div>
+
+                <div id="reportContainer" class="mt-8 bg-white rounded-2xl shadow-lg p-6 overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-3 px-4">Nama</th>
+                                <th class="py-3 px-4">Jumlah</th>
+                                <th class="py-3 px-4">Tanggal</th>
+                                <th class="py-3 px-4">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+
+                    <div class="mt-6 grid md:grid-cols-4 gap-6 text-center">
+                        <div>
+                            <p class="text-gray-500">Total Pengeluaran</p>
+                            <p id="totalExpense" class="font-bold text-red-600 text-xl">Rp 0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Jumlah Transaksi</p>
+                            <p id="totalTransactions" class="font-bold text-blue-600 text-xl">0</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Rata-rata</p>
+                            <p id="averageExpense" class="font-bold text-purple-600 text-xl">Rp 0</p>
+                        </div>
+                        <div>
+                            <p id="reportDate" class="text-gray-400 text-sm mt-4">Diperbarui: -</p>
+                        </div>
+                    </div>
+                </div>           
+
+                        <!-- Export Options -->
+                        <div class="space-y-6">
+                            <h3 class="text-xl font-bold text-gray-800 text-center mb-6">
+                                <i class="fas fa-download mr-2 text-green-500"></i>Pilih Format Export
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- PDF Export -->
+                                <button type="button" id="pdfBtn" class="export-btn bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all transform hover:scale-105 card-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <img src="https://static.vecteezy.com/system/resources/previews/023/234/826/non_2x/pdf-icon-pdf-format-file-simple-flat-trendy-modern-style-for-your-website-design-logo-and-mobile-app-free-png.png" alt="PDF" class="w-8 h-8" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                        <i class="fas fa-file-pdf text-2xl hidden"></i>
+                                        <span>Cetak ke PDF</span>
+                                        <div class="loading-spinner hidden"></div>
+                                    </div>
+                                    <p class="text-red-100 text-sm mt-2">Format dokumen profesional</p>
+                                </button>
+
+                                <!-- Excel Export -->
+                                <button type="button" id="excelBtn" class="export-btn bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all transform hover:scale-105 card-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg/826px-Microsoft_Office_Excel_%282019%E2%80%93present%29.svg.png" alt="Excel" class="w-8 h-8" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                        <i class="fas fa-file-excel text-2xl hidden"></i>
+                                        <span>Cetak ke Excel</span>
+                                        <div class="loading-spinner hidden"></div>
+                                    </div>
+                                    <p class="text-green-100 text-sm mt-2">Untuk analisis data lanjutan</p>
+                                </button>
+
+                                <!-- PNG Export -->
+                                <button type="button" id="pngBtn" class="export-btn bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all transform hover:scale-105 card-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <i class="fas fa-image text-2xl"></i>
+                                        <span>Cetak ke PNG</span>
+                                        <div class="loading-spinner hidden"></div>
+                                    </div>
+                                    <p class="text-purple-100 text-sm mt-2">Gambar berkualitas tinggi</p>
+                                </button>
+
+                                <!-- Spreadsheet Export -->
+                                <button type="button" id="spreadsheetBtn" class="export-btn bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all transform hover:scale-105 card-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <div class="flex items-center justify-center space-x-3">
+                                        <img src="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/images-removebg-preview.png" alt="Spreadsheet" class="w-8 h-8" onerror="this.src=''; this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                                        <i class="fas fa-table text-2xl hidden"></i>
+                                        <span>Cetak ke Spreadsheet</span>
+                                        <div class="loading-spinner hidden"></div>
+                                    </div>
+                                    <p class="text-blue-100 text-sm mt-2">Format tabel interaktif</p>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                <div class="glassmorphism rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-download text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">Export Cepat</h4>
+                    <p class="text-gray-600">Proses dalam hitungan detik</p>
+                </div>
+                
+                <div class="glassmorphism rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shield-alt text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">Data Aman</h4>
+                    <p class="text-gray-600">Enkripsi tingkat enterprise</p>
+                </div>
+                
+                <div class="glassmorphism rounded-2xl p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-magic text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">AI Enhanced</h4>
+                    <p class="text-gray-600">Optimasi otomatis dengan AI</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Popup -->
+    <div id="successPopup" class="success-popup fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-sm text-center shadow-2xl">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" fill="none" cx="26" cy="26" r="25"/>
+                <path class="checkmark__check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-800 mt-6 mb-4">Laporan Berhasil Dicetak!</h3>
+            <p id="successMessage" class="text-gray-600 mb-6">File telah berhasil diunduh ke perangkat Anda.</p>
+            <button id="successOkBtn" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                OK
+            </button>
+        </div>
+    </div>
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
+        const dataSelect = document.getElementById('dataSelect');
+        const successPopup = document.getElementById('successPopup');
+        const successOkBtn = document.getElementById('successOkBtn');
+        const successMessage = document.getElementById('successMessage');
+        const pngBtn = document.getElementById('pngBtn');
+
+        // ===============================
+        // SIDEBAR CONTROL
+        // ===============================
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebarFunc() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // ===============================
+        // POPUP SUKSES
+        // ===============================
+        function showSuccessPopup(format) {
+            const formatNames = { pdf: 'PDF', excel: 'Excel', png: 'PNG', spreadsheet: 'Spreadsheet' };
+            successMessage.textContent = `File ${formatNames[format]} telah berhasil diunduh ke perangkat Anda.`;
+            successPopup.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSuccessPopup() {
+            successPopup.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // ===============================
+        // DROPDOWN DATA LOCALSTORAGE
+        // ===============================
+        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+        dataSelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Pilih jenis data...';
+        dataSelect.appendChild(defaultOption);
+
+        if (expenses.length > 0) {
+            const option = document.createElement('option');
+            option.value = 'pengeluaran';
+            option.textContent = `Pengeluaran (${expenses.length} data)`;
+            dataSelect.appendChild(option);
+        } else {
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Belum ada data pengeluaran';
+            emptyOption.disabled = true;
+            dataSelect.appendChild(emptyOption);
+        }
+
+        // ===============================
+        // EXPORT PNG DENGAN HEADER PROFESIONAL
+        // ===============================
+        async function exportPNG() {
+            const selectedValue = dataSelect.value;
+            if (selectedValue !== 'pengeluaran') {
+                alert('Mohon pilih data pengeluaran terlebih dahulu.');
+                return;
+            }
+
+            const button = pngBtn;
+            const spinner = button.querySelector('.loading-spinner');
+            const span = button.querySelector('span');
+            const originalText = span.textContent;
+
+            button.disabled = true;
+            spinner.classList.remove('hidden');
+            span.textContent = 'Memproses...';
+
+            try {
+                const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+                if (expenses.length === 0) {
+                    alert('Belum ada data pengeluaran untuk diekspor.');
+                    spinner.classList.add('hidden');
+                    span.textContent = originalText;
+                    button.disabled = false;
+                    return;
+                }
+
+                const total = expenses.reduce((sum, e) => sum + e.price, 0);
+                const avg = Math.round(total / expenses.length);
+
+                const template = `
+                    <div style="
+                        font-family: 'Poppins', sans-serif;
+                        background: white;
+                        color: #333;
+                        padding: 40px 60px;
+                        border-radius: 16px;
+                        width: 900px;
+                        margin: auto;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                    ">
+                        <!-- HEADER -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                            <img src='https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png' 
+                                 style='width: 160px; height: auto;'>
+                            <div style="text-align: right;">
+                                <h2 style="margin: 0; color: #1f2937; font-size: 22px;">LAPORAN KEUANGAN</h2>
+                                <p style="margin: 3px 0; color: #6b7280;">Sistem: Manage Your Money!</p>
+                                <p style="font-size: 13px; color: #9ca3af;">
+                                    Diperbarui: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="height: 3px; background: linear-gradient(90deg, #4f46e5, #9333ea, #ec4899); border-radius: 2px; margin-bottom: 25px;"></div>
+
+                        <!-- ISI -->
+                        <div style="text-align: center;">
+                            <table style="width: 100%; border-collapse: collapse; margin: 0 auto; border-radius: 10px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #f3f4f6;">
+                                        <th style="padding: 12px;">📦 Nama</th>
+                                        <th style="padding: 12px;">💰 Jumlah</th>
+                                        <th style="padding: 12px;">📅 Tanggal</th>
+                                        <th style="padding: 12px;">📝 Catatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${expenses.map(exp => `
+                                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                                            <td style="padding: 10px;">${exp.name}</td>
+                                            <td style="padding: 10px;">Rp ${new Intl.NumberFormat('id-ID').format(exp.price)}</td>
+                                            <td style="padding: 10px;">${new Date(exp.date).toLocaleDateString('id-ID')}</td>
+                                            <td style="padding: 10px;">${exp.note || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+
+                            <div style="margin-top: 30px; display: flex; justify-content: space-around;">
+                                <div>
+                                    <p style="color: #6b7280;">Total Pengeluaran</p>
+                                    <h3 style="color: #dc2626;">💸 Rp ${new Intl.NumberFormat('id-ID').format(total)}</h3>
+                                </div>
+                                <div>
+                                    <p style="color: #6b7280;">Jumlah Transaksi</p>
+                                    <h3 style="color: #2563eb;">🧾 ${expenses.length}</h3>
+                                </div>
+                                <div>
+                                    <p style="color: #6b7280;">Rata-rata</p>
+                                    <h3 style="color: #7e22ce;">📈 Rp ${new Intl.NumberFormat('id-ID').format(avg)}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FOOTER -->
+                        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af;">
+                            <div style="height: 2px; background: linear-gradient(90deg, #ec4899, #9333ea, #4f46e5); border-radius: 2px; margin-bottom: 10px;"></div>
+                            <p>© ${new Date().getFullYear()} Manage Your Money — dibuat otomatis oleh sistem</p>
+                            <p><strong>💻 Developer:</strong> Hamzah Wisnu Dzaky</p>
+                        </div>
+                    </div>
+                `;
+
+                const tempContainer = document.createElement('div');
+                tempContainer.innerHTML = template;
+                tempContainer.style.display = 'flex';
+                tempContainer.style.justifyContent = 'center';
+                document.body.appendChild(tempContainer);
+
+                const canvas = await html2canvas(tempContainer, { scale: 2, useCORS: true });
+                const link = document.createElement('a');
+                link.download = 'Laporan_Pengeluaran.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                document.body.removeChild(tempContainer);
+                showSuccessPopup('png');
+            } catch (err) {
+                console.error('Gagal ekspor PNG:', err);
+                alert('Terjadi kesalahan saat mengekspor laporan.');
+            } finally {
+                button.disabled = false;
+                spinner.classList.add('hidden');
+                span.textContent = originalText;
+            }
+        }
+        const sidebarLinks = document.querySelectorAll('#sidebar nav a');
+        if (sidebarLinks.length >= 2) {
+            sidebarLinks[0].addEventListener('click', () => window.location.href = '/pengeluaran');
+            sidebarLinks[1].addEventListener('click', () => window.location.href = '/pemasukan');
+            sidebarLinks[2].addEventListener('click', () => window.location.href = '/ai');
+        }
+        // ===============================
+        // RENDER TABEL OTOMATIS
+        // ===============================
+        const tbody = document.getElementById('reportTableBody');
+        const totalExpense = document.getElementById('totalExpense');
+        const totalTransactions = document.getElementById('totalTransactions');
+        const averageExpense = document.getElementById('averageExpense');
+        const reportDate = document.getElementById('reportDate');
+
+        function renderTable() {
+            const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            tbody.innerHTML = '';
+
+            if (expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-500 py-6">Belum ada data pengeluaran 😢</td></tr>`;
+                totalExpense.textContent = 'Rp 0';
+                totalTransactions.textContent = '0';
+                averageExpense.textContent = 'Rp 0';
+                reportDate.textContent = 'Diperbarui: -';
+                return;
+            }
+
+            let total = 0;
+            expenses.forEach(exp => {
+                total += exp.price;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-3 px-4">📦 ${exp.name}</td>
+                    <td class="py-3 px-4">💰 Rp ${new Intl.NumberFormat('id-ID').format(exp.price)}</td>
+                    <td class="py-3 px-4">📅 ${new Date(exp.date).toLocaleDateString('id-ID')}</td>
+                    <td class="py-3 px-4">📝 ${exp.note || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            totalExpense.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(total)}`;
+            totalTransactions.textContent = expenses.length;
+            averageExpense.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(Math.round(total / expenses.length))}`;
+            reportDate.textContent = `Diperbarui: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
+        }
+
+        // ===============================
+        // EVENT HANDLER
+        // ===============================
+        dataSelect.addEventListener('change', () => {
+            if (dataSelect.value === 'pengeluaran') renderTable();
+        });
+        menuToggle.addEventListener('click', openSidebar);
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+        overlay.addEventListener('click', closeSidebarFunc);
+        successOkBtn.addEventListener('click', closeSuccessPopup);
+        pngBtn.addEventListener('click', exportPNG);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeSidebarFunc();
+                closeSuccessPopup();
+            }
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9894016565e2b5e7',t:'MTc1OTU3Mzg0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
