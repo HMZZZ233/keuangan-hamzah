@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cetak Laporan - Manage Your Money!</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <meta property="og:title" content="Manage Money - Pengeluaran">
     <meta property="og:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
     <meta property="og:type" content="website">
@@ -14,11 +18,7 @@
     <meta name="twitter:title" content="Manage Money - Pengeluaran">
     <meta name="twitter:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
     <meta name="twitter:image" content="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png">
-    <link rel="icon" href="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="icon" href="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png" type="image/png"> 
     <style>
         body {
             box-sizing: border-box;
@@ -427,10 +427,6 @@
         const successOkBtn = document.getElementById('successOkBtn');
         const successMessage = document.getElementById('successMessage');
         const pngBtn = document.getElementById('pngBtn');
-
-        // ===============================
-        // SIDEBAR CONTROL
-        // ===============================
         function openSidebar() {
             sidebar.classList.add('open');
             overlay.classList.add('active');
@@ -441,10 +437,6 @@
             overlay.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
-
-        // ===============================
-        // POPUP SUKSES
-        // ===============================
         function showSuccessPopup(format) {
             const formatNames = { pdf: 'PDF', excel: 'Excel', png: 'PNG', spreadsheet: 'Spreadsheet' };
             successMessage.textContent = `File ${formatNames[format]} telah berhasil diunduh ke perangkat Anda.`;
@@ -455,17 +447,12 @@
             successPopup.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
-
-        // ===============================
-        // DROPDOWN DATA LOCALSTORAGE
-        // ===============================
         const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
         dataSelect.innerHTML = '';
         const defaultOption = document.createElement('option');
         defaultOption.value = '';
         defaultOption.textContent = 'Pilih jenis data...';
         dataSelect.appendChild(defaultOption);
-
         if (expenses.length > 0) {
             const option = document.createElement('option');
             option.value = 'pengeluaran';
@@ -477,6 +464,279 @@
             emptyOption.textContent = 'Belum ada data pengeluaran';
             emptyOption.disabled = true;
             dataSelect.appendChild(emptyOption);
+        }
+        async function exportPDF() {
+                const selectedValue = dataSelect.value;
+                if (selectedValue !== 'pengeluaran') {
+                        alert('Mohon pilih data pengeluaran terlebih dahulu.');
+                        return;
+                }
+                const button = document.getElementById('pdfBtn');
+                const spinner = button.querySelector('.loading-spinner');
+                const span = button.querySelector('span');
+                const originalText = span.textContent;
+                button.disabled = true;
+                spinner.classList.remove('hidden');
+                span.textContent = 'Memproses...';
+                try {
+                        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+                        if (expenses.length === 0) {
+                                alert('Belum ada data pengeluaran untuk diekspor.');
+                                spinner.classList.add('hidden');
+                                span.textContent = originalText;
+                                button.disabled = false;
+                                return;
+                        }
+                        const total = expenses.reduce((sum, e) => sum + e.price, 0);
+                        const avg = Math.round(total / expenses.length);
+                        const template = `
+                                <div style="
+                                        font-family: 'Poppins', sans-serif;
+                                        background: white;
+                                        color: #333;
+                                        padding: 40px 60px;
+                                        border-radius: 16px;
+                                        width: 900px;
+                                        margin: auto;
+                                        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                                ">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                                                <img src='https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png'
+                                                        style='width: 160px; height: auto;'>
+                                                <div style="text-align: right;">
+                                                        <h2 style="margin: 0; color: #1f2937; font-size: 22px;">LAPORAN KEUANGAN</h2>
+                                                        <p style="margin: 3px 0; color: #6b7280;">Sistem: Manage Your Money!</p>
+                                                        <p style="font-size: 13px; color: #9ca3af;">
+                                                                Diperbarui: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                        </p>
+                                                </div>
+                                        </div>
+
+                                        <div style="height: 3px; background: linear-gradient(90deg, #4f46e5, #9333ea, #ec4899); border-radius: 2px; margin-bottom: 25px;"></div>
+
+                                        <table style="width: 100%; border-collapse: collapse; margin: 0 auto; border-radius: 10px; overflow: hidden;">
+                                                <thead>
+                                                        <tr style="background: #f3f4f6;">
+                                                                <th style="padding: 12px;">📦 Nama</th>
+                                                                <th style="padding: 12px;">💰 Jumlah</th>
+                                                                <th style="padding: 12px;">📅 Tanggal</th>
+                                                                <th style="padding: 12px;">📝 Catatan</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        ${expenses.map(exp => `
+                                                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                                                        <td style="padding: 10px;">${exp.name}</td>
+                                                                        <td style="padding: 10px;">Rp ${new Intl.NumberFormat('id-ID').format(exp.price)}</td>
+                                                                        <td style="padding: 10px;">${new Date(exp.date).toLocaleDateString('id-ID')}</td>
+                                                                        <td style="padding: 10px;">${exp.note || '-'}</td>
+                                                                </tr>
+                                                        `).join('')}
+                                                </tbody>
+                                        </table>
+
+                                        <div style="margin-top: 30px; display: flex; justify-content: space-around;">
+                                                <div>
+                                                        <p style="color: #6b7280;">Total Pengeluaran</p>
+                                                        <h3 style="color: #dc2626;">💸 Rp ${new Intl.NumberFormat('id-ID').format(total)}</h3>
+                                                </div>
+                                                <div>
+                                                        <p style="color: #6b7280;">Jumlah Transaksi</p>
+                                                        <h3 style="color: #2563eb;">🧾 ${expenses.length}</h3>
+                                                </div>
+                                                <div>
+                                                        <p style="color: #6b7280;">Rata-rata</p>
+                                                        <h3 style="color: #7e22ce;">📈 Rp ${new Intl.NumberFormat('id-ID').format(avg)}</h3>
+                                                </div>
+                                        </div>
+
+                                        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af;">
+                                                <div style="height: 2px; background: linear-gradient(90deg, #ec4899, #9333ea, #4f46e5); border-radius: 2px; margin-bottom: 10px;"></div>
+                                                <p>© ${new Date().getFullYear()} Manage Your Money — dibuat otomatis oleh sistem</p>
+                                                <p><strong>💻 Developer:</strong> Hamzah Wisnu Dzaky</p>
+                                        </div>
+                                </div>
+                        `;
+
+                        const tempContainer = document.createElement('div');
+                        tempContainer.innerHTML = template;
+                        document.body.appendChild(tempContainer);
+                        const canvas = await html2canvas(tempContainer, { scale: 2, useCORS: true });
+                        const imgData = canvas.toDataURL('image/png');
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgProps = pdf.getImageProperties(imgData);
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                        pdf.save('Laporan_Pengeluaran.pdf');
+                        document.body.removeChild(tempContainer);
+                        showSuccessPopup('pdf');
+                } catch (err) {
+                        console.error('Gagal ekspor PDF:', err);
+                        alert('Terjadi kesalahan saat mengekspor laporan.');
+                } finally {
+                        button.disabled = false;
+                        spinner.classList.add('hidden');
+                        span.textContent = originalText;
+                }
+        }
+
+        async function exportExcel() {
+                const selectedValue = dataSelect.value;
+                if (selectedValue !== 'pengeluaran') {
+                        alert('Pilih data pengeluaran dulu.');
+                        return;
+                }
+
+                const button = document.getElementById('excelBtn');
+                const spinner = button.querySelector('.loading-spinner');
+                const span = button.querySelector('span');
+                const originalText = span.textContent;
+
+                button.disabled = true;
+                spinner.classList.remove('hidden');
+                span.textContent = 'Memproses...';
+
+                try {
+                        const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+                        if (expenses.length === 0) {
+                                alert('Belum ada data pengeluaran.');
+                                spinner.classList.add('hidden');
+                                span.textContent = originalText;
+                                button.disabled = false;
+                                return;
+                        }
+
+                        const total = expenses.reduce((sum, e) => sum + e.price, 0);
+                        const avg = Math.round(total / expenses.length);
+                        const currentDate = new Date().toLocaleDateString('id-ID', {
+                                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                        });
+
+                        // ==== DATA LAPORAN ====
+                        const wb = XLSX.utils.book_new();
+                        const ws_data = [];
+
+                        // HEADER
+                        ws_data.push(['LAPORAN PENGELUARAN - MANAGE YOUR MONEY!']);
+                        ws_data.push([`Diperbarui: ${currentDate}`]);
+                        ws_data.push([]);
+                        ws_data.push(['Nama', 'Jumlah (Rp)', 'Tanggal', 'Catatan']);
+
+                        // ISI DATA
+                        expenses.forEach(exp => {
+                                ws_data.push([
+                                        exp.name,
+                                        exp.price,
+                                        new Date(exp.date).toLocaleDateString('id-ID'),
+                                        exp.note || '-'
+                                ]);
+                        });
+
+                        // SUMMARY
+                        ws_data.push([]);
+                        ws_data.push(['Total Pengeluaran', total, '', '']);
+                        ws_data.push(['Rata-rata Pengeluaran', avg, '', '']);
+                        ws_data.push(['Jumlah Transaksi', expenses.length, '', '']);
+                        ws_data.push([]);
+                        ws_data.push([`© ${new Date().getFullYear()} Hamzah Wisnu Dzaky`]);
+
+                        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+                        // ===== MERGE HEADER =====
+                        ws['!merges'] = [
+                                { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+                                { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }
+                        ];
+
+                        ws['!cols'] = [
+                                { wch: 25 },
+                                { wch: 18 },
+                                { wch: 18 },
+                                { wch: 35 }
+                        ];
+
+                        // ===== BORDER SEMUA SEL =====
+                        const borderAll = {
+                                top: { style: "medium", color: { rgb: "000000" } },
+                                bottom: { style: "medium", color: { rgb: "000000" } },
+                                left: { style: "medium", color: { rgb: "000000" } },
+                                right: { style: "medium", color: { rgb: "000000" } }
+                        };
+
+                        const range = XLSX.utils.decode_range(ws['!ref']);
+                        for (let R = 0; R <= range.e.r; ++R) {
+                                for (let C = 0; C <= range.e.c; ++C) {
+                                        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                                        if (!ws[cellAddress]) ws[cellAddress] = { v: '' };
+
+                                        // Header utama
+                                        if (R === 0) {
+                                                ws[cellAddress].s = {
+                                                        font: { bold: true, sz: 16 },
+                                                        alignment: { horizontal: "center" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                        // Tanggal
+                                        else if (R === 1) {
+                                                ws[cellAddress].s = {
+                                                        font: { italic: true, sz: 11 },
+                                                        alignment: { horizontal: "center" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                        // Header tabel
+                                        else if (R === 3) {
+                                                ws[cellAddress].s = {
+                                                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                                                        fill: { fgColor: { rgb: "1E40AF" } },
+                                                        alignment: { horizontal: "center" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                        // Isi tabel
+                                        else if (R > 3 && R <= 3 + expenses.length - 1) {
+                                                const even = (R % 2 === 0);
+                                                ws[cellAddress].s = {
+                                                        fill: { fgColor: { rgb: even ? "F3F4F6" : "FFFFFF" } },
+                                                        font: { sz: 11 },
+                                                        alignment: { horizontal: C === 1 ? "right" : "left" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                        // Summary
+                                        else if (R > 3 + expenses.length - 1 && R <= range.e.r - 1) {
+                                                ws[cellAddress].s = {
+                                                        font: { bold: true },
+                                                        fill: { fgColor: { rgb: "E5E7EB" } },
+                                                        alignment: { horizontal: C === 1 ? "right" : "left" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                        // Footer
+                                        else if (R === range.e.r) {
+                                                ws[cellAddress].s = {
+                                                        font: { italic: true },
+                                                        alignment: { horizontal: "center" },
+                                                        border: borderAll
+                                                };
+                                        }
+                                }
+                        }
+
+                        XLSX.utils.book_append_sheet(wb, ws, "Laporan Pengeluaran");
+                        XLSX.writeFile(wb, "Laporan_Pengeluaran_Profesional.xlsx");
+                        showSuccessPopup('excel');
+                } catch (err) {
+                        console.error('Gagal ekspor Excel:', err);
+                        alert('Terjadi kesalahan saat mengekspor laporan.');
+                } finally {
+                        button.disabled = false;
+                        spinner.classList.add('hidden');
+                        span.textContent = originalText;
+                }
         }
 
         // ===============================
@@ -614,9 +874,7 @@
             sidebarLinks[1].addEventListener('click', () => window.location.href = '/pemasukan');
             sidebarLinks[2].addEventListener('click', () => window.location.href = '/ai');
         }
-        // ===============================
-        // RENDER TABEL OTOMATIS
-        // ===============================
+        // render tabel
         const tbody = document.getElementById('reportTableBody');
         const totalExpense = document.getElementById('totalExpense');
         const totalTransactions = document.getElementById('totalTransactions');
@@ -654,13 +912,18 @@
             averageExpense.textContent = `Rp ${new Intl.NumberFormat('id-ID').format(Math.round(total / expenses.length))}`;
             reportDate.textContent = `Diperbarui: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
         }
-
-        // ===============================
-        // EVENT HANDLER
-        // ===============================
+        // event listener
+        const spreadsheetBtn = document.getElementById('spreadsheetBtn');
+        spreadsheetBtn.addEventListener('click', () => {
+            alert('Fitur ini masih dalam pengerjaan');
+        });
+        const pdfBtn = document.getElementById('pdfBtn');
+        pdfBtn.addEventListener('click', exportPDF);
         dataSelect.addEventListener('change', () => {
             if (dataSelect.value === 'pengeluaran') renderTable();
         });
+        const excelBtn = document.getElementById('excelBtn');
+        excelBtn.addEventListener('click', exportExcel);
         menuToggle.addEventListener('click', openSidebar);
         closeSidebar.addEventListener('click', closeSidebarFunc);
         overlay.addEventListener('click', closeSidebarFunc);
