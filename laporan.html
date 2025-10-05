@@ -9,16 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <meta property="og:title" content="Manage Money - Pengeluaran">
-    <meta property="og:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://manage-money.vercel.app/laporan">
-    <meta property="og:image" content="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Manage Money - Pengeluaran">
-    <meta name="twitter:description" content="Catat semua pengeluaran harianmu dengan mudah dan cepat.">
-    <meta name="twitter:image" content="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png">
-    <link rel="icon" href="https://uploads.onecompiler.io/43e3nkn3a/43cxu8ubd/Teks_paragraf_Anda__1_-removebg-preview.png" type="image/png"> 
     <style>
         body {
             box-sizing: border-box;
@@ -223,6 +213,13 @@
                     <i class="fas fa-file-alt text-blue-600 text-xl"></i>
                 </div>
                 <span class="text-blue-700 font-medium">Cetak Laporan</span>
+            </a>
+
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-orange-50 transition-colors group">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200">
+                    <i class="fas fa-piggy-bank text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Tabungan Harapan</span>
             </a>
         </nav>
     </div>
@@ -873,6 +870,7 @@
             sidebarLinks[0].addEventListener('click', () => window.location.href = '/pengeluaran');
             sidebarLinks[1].addEventListener('click', () => window.location.href = '/pemasukan');
             sidebarLinks[2].addEventListener('click', () => window.location.href = '/ai');
+            sidebarLinks[3].addEventListener('click', () => window.location.href = '/tabungan');
         }
         // render tabel
         const tbody = document.getElementById('reportTableBody');
