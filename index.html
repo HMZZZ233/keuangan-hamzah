@@ -101,12 +101,19 @@
                 </div>
                 <span class="text-gray-700 font-medium">AI Atur Pengeluaran</span>
             </a>
-
+            
             <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-blue-50 transition-colors group">
                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200">
                     <i class="fas fa-file-alt text-blue-600 text-xl"></i>
                 </div>
                 <span class="text-gray-700 font-medium">Cetak Laporan</span>
+            </a>
+
+            <a href="#" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-orange-50 transition-colors group">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200">
+                    <i class="fas fa-piggy-bank text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Tabungan Harapan</span>
             </a>
         </nav>
     </div>
@@ -189,6 +196,19 @@
                     <div class="text-sm text-purple-700 mt-2">"Kurangi 15% pengeluaran makanan"</div>
                 </div>
             </div>
+
+            <!-- Feature 4: Cetak Laporan -->
+            <div class="feature-card card-hover rounded-3xl p-8 text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-file-alt text-white text-2xl"></i>
+                </div>
+                <h4 class="text-2xl font-bold text-gray-800 mb-4">Cetak Laporan</h4>
+                <p class="text-gray-600 mb-6">Cetak laporan keuangan secara profesional dan rapi dalam format PDF, PNG dan Excel</p>
+                <div class="bg-blue-50 rounded-xl p-4">
+                    <div class="text-sm text-blue-600 font-medium">Preview: Laporan Bulanan</div>
+                    <div class="text-2xl font-bold text-blue-700 mt-2">Rp 4.250.000</div>
+                </div>
+            </div>
         </div>
     </section>
     
@@ -258,6 +278,9 @@
             sidebarLinks[3].addEventListener("click", function () {
                 window.location.href = "/laporan"
             });
+            sidebarLinks[4].addEventListener("click", function () {
+                window.location.href = "/tabungan"
+            });          
         }
         const menuToggle = document.getElementById("menuToggle");
         const sidebar = document.getElementById("sidebar");
