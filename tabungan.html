@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabungan Harapan - Manage Your Money!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        .overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .emoji-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        
+        .books-emoji {
+            width: 80px;
+            height: 80px;
+            display: inline-block;
+        }
+        
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        
+        .popup {
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.8);
+            transition: all 0.4s ease;
+        }
+        
+        .popup.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .floating-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(102, 126, 234, 0.8);
+            }
+        }
+        
+        .search-result {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s ease forwards;
+        }
+        
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .savings-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .savings-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen font-sans">
+    <!-- Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 p-6">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-800">Menu</h2>
+            <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="space-y-4">
+            <a href="#" id="menuPengeluaran" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-red-50 transition-colors group">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200">
+                    <i class="fas fa-minus-circle text-red-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Catat Pengeluaran</span>
+            </a>
+            
+            <a href="#" id="menuPemasukan" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-green-50 transition-colors group">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200">
+                    <i class="fas fa-plus-circle text-green-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Catat Pemasukan</span>
+            </a>
+            
+            <a href="#" id="menuAI" class="flex items-center space-x-4 p-4 rounded-xl bg-purple-50 border-2 border-purple-200">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-purple-700 font-medium">AI Atur Pengeluaran</span>
+            </a>
+
+            <a href="#" id="menuLaporan" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-blue-50 transition-colors group">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200">
+                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Cetak Laporan</span>
+            </a>
+
+            <a href="#" id="menuTabungan" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-orange-50 transition-colors group">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200">
+                    <i class="fas fa-piggy-bank text-orange-600 text-xl"></i>
+                </div>
+                <span class="text-gray-700 font-medium">Tabungan Harapan</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Header -->
+    <header class="relative z-30">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <button id="menuToggle" class="bg-white rounded-xl p-3 shadow-lg hover:shadow-xl transition-shadow">
+                    <i class="fas fa-bars text-blue-600 text-xl"></i>
+                </button>
+                
+                <div class="flex items-center space-x-3">
+                    <img src="https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064" alt="Money" class="emoji-icon" onerror="this.src=''; this.alt='💰'; this.style.fontSize='24px';">
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                        Manage Your Money!
+                    </h1>
+                </div>
+                
+                <div class="w-16"></div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="text-center mb-12">
+            <div class="flex items-center justify-center space-x-4 mb-6">
+                <img src="https://em-content.zobj.net/source/apple/81/books_1f4da.png" alt="Books" class="books-emoji floating-animation" onerror="this.src=''; this.alt='📚'; this.style.fontSize='80px';">
+                <h2 class="text-4xl font-bold gradient-text">
+                    Tabungan Harapan
+                </h2>
+            </div>
+            <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                Wujudkan impian Anda dengan menabung untuk barang yang diinginkan. Atur target dan dapatkan notifikasi ketika sudah tercapai!
+            </p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="glassmorphism rounded-3xl shadow-2xl overflow-hidden backdrop-blur-lg p-8">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Cari Barang Impian Anda</h3>
+                    
+                    <!-- GIF -->
+                    <div class="mb-6 flex justify-center">
+                        <img 
+                            src="https://media1.tenor.com/m/V3mqhwScm1QAAAAC/nerd-emoji-nerd.gif" 
+                            alt="Nerd Emoji" 
+                            class="w-32 h-32 rounded-2xl"
+                            onerror="this.src=''; this.alt='🤓'; this.style.fontSize='80px'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center';"
+                        >
+                    </div>
+                </div>
+                
+                <!-- Search Input -->
+                <div class="relative mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="relative flex-1">
+                            <input 
+                                type="text" 
+                                id="searchInput" 
+                                placeholder="Cari barang yang ingin ditabung..." 
+                                class="w-full px-6 py-4 border-2 border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all text-lg bg-white pl-14"
+                            >
+                            <i class="fas fa-search absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl"></i>
+                        </div>
+                        <button 
+                            id="searchBtn" 
+                            class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-xl transition-all flex items-center space-x-2"
+                        >
+                            <i class="fas fa-search text-lg"></i>
+                            <span>Cari</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Search Results -->
+                <div id="searchResults" class="mt-6"></div>
+
+                
+                <!-- Savings Goals -->
+                <div id="savingsGoals"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Permission Popup -->
+    <div id="notificationPopup" class="popup fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md text-center shadow-2xl">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-bell text-blue-600 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Izinkan Manage Your Money!</h3>
+            <p class="text-gray-600 mb-6">Mengirimkan Notifikasi?</p>
+            <div class="flex space-x-4">
+                <button id="notificationNo" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all">
+                    No
+                </button>
+                <button id="notificationYes" class="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                    Yes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Details Popup -->
+    <div id="goalDetailsPopup" class="popup fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Detail Tujuan Tabungan</h3>
+            
+            <form id="goalForm" class="space-y-6">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Nama Barang</label>
+                    <input 
+                        type="text" 
+                        id="itemName" 
+                        required 
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                        placeholder="Masukkan nama barang..."
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Harga Barang</label>
+                    <input 
+                        type="number" 
+                        id="itemPrice" 
+                        required 
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                        placeholder="Masukkan harga barang..."
+                    >
+                </div>
+                
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Saldo Saat Ini</label>
+                    <input 
+                        type="number" 
+                        id="currentBalance" 
+                        required 
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                        placeholder="Masukkan saldo Anda saat ini..."
+                    >
+                </div>
+                
+                <div class="border-t pt-6">
+                    <h4 class="text-lg font-bold text-gray-800 mb-4">Kirimkan Notifikasi "Apakah Biaya Sudah Tercukupi?"</h4>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Tanggal</label>
+                            <input 
+                                type="date" 
+                                id="notificationDate" 
+                                required 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                            >
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Jam</label>
+                            <input 
+                                type="time" 
+                                id="notificationTime" 
+                                required 
+                                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all"
+                            >
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4 pt-4">
+                    <button type="button" id="cancelGoal" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-all">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                        Simpan Tujuan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Goal Info Popup -->
+    <div id="goalInfoPopup" class="popup fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-piggy-bank text-purple-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">Detail Tujuan Tabungan</h3>
+                
+                <div id="goalInfoContent" class="text-left space-y-4">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                
+                <button id="closeGoalInfo" class="mt-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('overlay');
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const notificationPopup = document.getElementById('notificationPopup');
+        const goalDetailsPopup = document.getElementById('goalDetailsPopup');
+        const goalInfoPopup = document.getElementById('goalInfoPopup');
+        const savingsGoals = document.getElementById('savingsGoals');
+
+        let savedGoals = JSON.parse(localStorage.getItem('savedGoals') || '[]');
+
+        function saveGoalsToLocalStorage() {
+                localStorage.setItem('savedGoals', JSON.stringify(savedGoals));
+        }
+
+        function requestNotificationPermission() {
+                if ('Notification' in window && Notification.permission !== 'granted') {
+                        Notification.requestPermission();
+                }
+        }
+        function sendNotification(title, options) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification(title, options);
+                }
+        }
+        function checkNotifications() {
+                const now = new Date();
+                savedGoals.forEach(goal => {
+                        const goalDateTime = new Date(`${goal.notificationDate}T${goal.notificationTime}`);
+                        if (!goal.notified && goalDateTime <= now) {
+                                sendNotification('Pengingat Tujuan Tabungan', {
+                                        body: `Cek saldo untuk: ${goal.itemName}`,
+                                        icon: 'https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064'
+                                });
+                                goal.notified = true;
+                                saveGoalsToLocalStorage();
+                        }
+                });
+        }
+        setInterval(checkNotifications, 60000);
+        requestNotificationPermission();
+
+        function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+        }
+        function closeSidebarFunc() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+        }
+
+        function showPopup(popup) {
+                popup.classList.add('active');
+                document.body.style.overflow = 'hidden';
+        }
+
+        function hidePopup(popup) {
+                popup.classList.remove('active');
+                document.body.style.overflow = 'auto';
+        }
+
+        function formatCurrency(amount) {
+                return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0
+                }).format(amount);
+        }
+
+        function createSavingsCard(goal) {
+                const progress = Math.min((goal.currentBalance / goal.itemPrice) * 100, 100);
+                const remaining = Math.max(goal.itemPrice - goal.currentBalance, 0);
+
+                return `
+                        <div class="savings-card" onclick="showGoalInfo(${goal.id})">
+                                <div class="flex items-center justify-between mb-4">
+                                        <h4 class="text-xl font-bold">${goal.itemName}</h4>
+                                        <span class="text-lg font-semibold">${formatCurrency(goal.itemPrice)}</span>
+                                </div>
+
+                                <div class="mb-4">
+                                        <div class="flex justify-between text-sm mb-2">
+                                                <span>Progress</span>
+                                                <span>${progress.toFixed(1)}%</span>
+                                        </div>
+                                        <div class="w-full bg-white bg-opacity-30 rounded-full h-3">
+                                                <div class="bg-white h-3 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                                        </div>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                        <div>
+                                                <p class="text-sm opacity-90">Saldo Saat Ini</p>
+                                                <p class="font-semibold">${formatCurrency(goal.currentBalance)}</p>
+                                        </div>
+                                        <div class="text-right">
+                                                <p class="text-sm opacity-90">Kurang</p>
+                                                <p class="font-semibold">${formatCurrency(remaining)}</p>
+                                        </div>
+                                </div>
+
+                                <div class="mt-4 text-sm opacity-90">
+                                        <i class="fas fa-bell mr-2"></i>Notifikasi: ${goal.notificationDate} ${goal.notificationTime}
+                                </div>
+
+                                <div class="flex justify-end space-x-2 mt-3">
+                                        <button onclick="editGoal(${goal.id}); event.stopPropagation();" class="bg-yellow-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-yellow-600">Edit</button>
+                                        <button onclick="deleteGoal(${goal.id}); event.stopPropagation();" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-600">Hapus</button>
+                                </div>
+                        </div>
+                `;
+        }
+
+        function renderSavingsGoals() {
+                if (savedGoals.length === 0) {
+                        savingsGoals.innerHTML = '';
+                        return;
+                }
+
+                savingsGoals.innerHTML = savedGoals.map(goal => createSavingsCard(goal)).join('');
+        }
+
+        function showGoalInfo(goalId) {
+                const goal = savedGoals.find(g => g.id === goalId);
+                if (!goal) return;
+
+                const progress = Math.min((goal.currentBalance / goal.itemPrice) * 100, 100);
+                const remaining = Math.max(goal.itemPrice - goal.currentBalance, 0);
+
+                document.getElementById('goalInfoContent').innerHTML = `
+                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                                <h4 class="font-bold text-lg text-gray-800 mb-2">${goal.itemName}</h4>
+                                <p class="text-gray-600">Target: ${formatCurrency(goal.itemPrice)}</p>
+                        </div>
+
+                        <div class="space-y-3">
+                                <div class="flex justify-between">
+                                        <span class="text-gray-600">Saldo Saat Ini:</span>
+                                        <span class="font-semibold">${formatCurrency(goal.currentBalance)}</span>
+                                </div>
+
+                                <div class="flex justify-between">
+                                        <span class="text-gray-600">Kurang:</span>
+                                        <span class="font-semibold text-red-600">${formatCurrency(remaining)}</span>
+                                </div>
+
+                                <div class="flex justify-between">
+                                        <span class="text-gray-600">Progress:</span>
+                                        <span class="font-semibold text-green-600">${progress.toFixed(1)}%</span>
+                                </div>
+
+                                <div class="w-full bg-gray-200 rounded-full h-3 mt-4">
+                                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                                </div>
+
+                                <div class="bg-blue-50 rounded-xl p-4 mt-4">
+                                        <h5 class="font-semibold text-blue-800 mb-2">
+                                                <i class="fas fa-bell mr-2"></i>Pengingat Notifikasi
+                                        </h5>
+                                        <p class="text-blue-700">
+                                                ${goal.notificationDate} pukul ${goal.notificationTime}
+                                        </p>
+                                        <p class="text-sm text-blue-600 mt-1">
+                                                "Apakah biaya sudah tercukupi?"
+                                        </p>
+                                </div>
+                        </div>
+                `;
+
+                showPopup(goalInfoPopup);
+        }
+
+        function deleteGoal(goalId) {
+                savedGoals = savedGoals.filter(g => g.id !== goalId);
+                saveGoalsToLocalStorage();
+                renderSavingsGoals();
+        }
+
+        function editGoal(goalId) {
+                const goal = savedGoals.find(g => g.id === goalId);
+                if (!goal) return;
+
+                const newBalance = prompt(`Saldo saat ini untuk "${goal.itemName}" adalah ${formatCurrency(goal.currentBalance)}.\nMasukkan saldo baru:`, goal.currentBalance);
+                if (newBalance === null || isNaN(newBalance) || newBalance < 0) return;
+
+                goal.currentBalance = parseInt(newBalance);
+                saveGoalsToLocalStorage();
+                renderSavingsGoals();
+        }
+
+        async function performSearch() {
+                const query = searchInput.value.trim();
+                if (query.length === 0) {
+                        searchResults.classList.add('hidden');
+                        return;
+                }
+
+                searchResults.innerHTML = '<div class="loading-animation">Loading...</div>';
+
+                try {
+                        const res = await fetch(`https://api.siputzx.my.id/api/images?query=${encodeURIComponent(query)}`);
+                        const data = await res.json();
+
+                        if (!data.status || !data.data || data.data.length === 0) {
+                                searchResults.innerHTML = '<p class="text-center text-gray-500">Tidak ada hasil ditemukan.</p>';
+                                searchResults.classList.remove('hidden');
+                                return;
+                        }
+
+                        searchResults.innerHTML = data.data.map((item, index) => `
+                                <div class="search-result bg-white rounded-2xl p-6 shadow-lg mb-4">
+                                        <div class="flex items-center space-x-6">
+                                                <img src="${item.url}" alt="Product" class="w-32 h-32 object-cover rounded-xl">
+                                                <div class="flex-1">
+                                                        <h4 class="text-xl font-bold text-gray-800 mb-2">Unknown</h4>
+                                                        <p class="text-gray-600 mb-4">Unknown</p>
+                                                        <div class="flex items-center justify-between">
+                                                                <span class="text-2xl font-bold text-green-600">Rp 0</span>
+                                                                <button onclick="addToGoal('Unknown', 0)" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
+                                                                        Tambahkan ke Tujuan
+                                                                </button>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </div>
+                        `).join('');
+                        searchResults.classList.remove('hidden');
+                } catch (err) {
+                        console.error(err);
+                        searchResults.innerHTML = '<p class="text-center text-red-500">Gagal mengambil data.</p>';
+                        searchResults.classList.remove('hidden');
+                }
+        }
+
+        function addToGoal(name, price) {
+                hidePopup(notificationPopup);
+                document.getElementById('itemName').value = name;
+                document.getElementById('itemPrice').value = price;
+                document.getElementById('currentBalance').value = 0;
+                showPopup(goalDetailsPopup);
+        }
+
+        menuToggle.addEventListener('click', openSidebar);
+        closeSidebar.addEventListener('click', closeSidebarFunc);
+        overlay.addEventListener('click', closeSidebarFunc);
+        document.getElementById('searchBtn').addEventListener('click', performSearch);
+        document.getElementById('notificationNo').addEventListener('click', () => hidePopup(notificationPopup));
+        document.getElementById('notificationYes').addEventListener('click', () => {
+                hidePopup(notificationPopup);
+                showPopup(goalDetailsPopup);
+        });
+
+        document.getElementById('goalForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const goal = {
+                        id: Date.now(),
+                        itemName: document.getElementById('itemName').value,
+                        itemPrice: parseInt(document.getElementById('itemPrice').value),
+                        currentBalance: parseInt(document.getElementById('currentBalance').value),
+                        notificationDate: document.getElementById('notificationDate').value,
+                        notificationTime: document.getElementById('notificationTime').value,
+                        notified: false
+                };
+                savedGoals.push(goal);
+                saveGoalsToLocalStorage();
+                renderSavingsGoals();
+                this.reset();
+                hidePopup(goalDetailsPopup);
+                searchResults.classList.add('hidden');
+                searchInput.value = '';
+        });
+        document.getElementById('menuPengeluaran').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "/pengeluaran";
+        });
+
+        document.getElementById('menuPemasukan').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "/pemasukan";
+        });
+
+        document.getElementById('menuLaporan').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "/laporan";
+        });
+
+        document.getElementById('menuTabungan').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "/tabungan";
+        });
+        document.getElementById('menuAI').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "/ai";
+        });
+        document.getElementById('cancelGoal').addEventListener('click', () => hidePopup(goalDetailsPopup));
+        document.getElementById('closeGoalInfo').addEventListener('click', () => hidePopup(goalInfoPopup));
+
+        document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                        closeSidebarFunc();
+                        hidePopup(notificationPopup);
+                        hidePopup(goalDetailsPopup);
+                        hidePopup(goalInfoPopup);
+                }
+        });
+
+        document.getElementById('notificationDate').valueAsDate = new Date();
+        renderSavingsGoals();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'989bd313b7620890',t:'MTc1OTY1NTgzMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
