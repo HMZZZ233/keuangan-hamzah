@@ -1,6 +1,7 @@
 {
     "rewrites": [
-        { "source": "/laporan", "destination": "/laporan.html"},
+        { "source": "/tabungan", "destination": "/tabungan.html" },
+        { "source": "/laporan", "destination": "/laporan.html" },
         { "source": "/ai", "destination": "/ai.html"},
         { "source": "/pengeluaran", "destination": "/pengeluaran.html" },
         { "source": "/pemasukan", "destination": "/pemasukan.html" },
