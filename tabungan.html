@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabungan Harapan - Manage Your Money!</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
@@ -161,7 +162,7 @@
                 <span class="text-gray-700 font-medium">Catat Pemasukan</span>
             </a>
             
-            <a href="#" id="menuAI" class="flex items-center space-x-4 p-4 rounded-xl bg-purple-50 border-2 border-purple-200">
+            <a href="#" id="menuAI" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-purple-50 transition-colors group">
                 <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-robot text-purple-600 text-xl"></i>
                 </div>
@@ -175,7 +176,7 @@
                 <span class="text-gray-700 font-medium">Cetak Laporan</span>
             </a>
 
-            <a href="#" id="menuTabungan" class="flex items-center space-x-4 p-4 rounded-xl hover:bg-orange-50 transition-colors group">
+            <a href="#" id="menuTabungan" class="flex items-center space-x-4 p-4 rounded-xl bg-orange-50 border-2 border-orange-200">
                 <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200">
                     <i class="fas fa-piggy-bank text-orange-600 text-xl"></i>
                 </div>
@@ -393,7 +394,7 @@
         const goalDetailsPopup = document.getElementById('goalDetailsPopup');
         const goalInfoPopup = document.getElementById('goalInfoPopup');
         const savingsGoals = document.getElementById('savingsGoals');
-
+        let currentMusic = null;
         let savedGoals = JSON.parse(localStorage.getItem('savedGoals') || '[]');
 
         function saveGoalsToLocalStorage() {
@@ -405,28 +406,57 @@
                         Notification.requestPermission();
                 }
         }
-        function sendNotification(title, options) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification(title, options);
-                }
+        function playMusic() {
+            stopMusic();
+            currentMusic = new Audio('assets/music.mp3');
+            currentMusic.volume = 0.8;
+            currentMusic.play();
+            setTimeout(() => stopMusic(), 15000);
+        }
+        function stopMusic() {
+            if (currentMusic) {
+                currentMusic.pause();
+                currentMusic.currentTime = 0;
+                currentMusic = null;
+            }     
         }
         function checkNotifications() {
                 const now = new Date();
                 savedGoals.forEach(goal => {
                         const goalDateTime = new Date(`${goal.notificationDate}T${goal.notificationTime}`);
+                        const diffSeconds = Math.floor((now - goalDateTime) / 1000);
                         if (!goal.notified && goalDateTime <= now) {
-                                sendNotification('Pengingat Tujuan Tabungan', {
-                                        body: `Cek saldo untuk: ${goal.itemName}`,
-                                        icon: 'https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064'
+                                sendNotification('Tabungan Harapan - Manage Your Money', {
+                                        body: `Apakah Saldo Sudah Mencukupi Untuk: ${goal.itemName}`,
+                                        icon: 'https://emojiisland.com/cdn/shop/products/Money_Bag_Emoji_large.png?v=1571606064',
+                                        vibrate: [200, 100, 200],
+                                        tag: `goal-${goal.id}`
                                 });
+                                playMusic();
                                 goal.notified = true;
                                 saveGoalsToLocalStorage();
                         }
                 });
         }
-        setInterval(checkNotifications, 60000);
+        function sendNotification(title, options) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                        const notif = new Notification(title, options);
+                        notif.onclick = () => {
+                            stopMusic();
+                            window.focus();
+                            notif.close();
+                        };
+                        notif.onclose = () => {
+                            stopMusic();
+                        };
+                        return notif;
+                }
+        }
+        setInterval(checkNotifications, 1000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopMusic();
+        });
         requestNotificationPermission();
-
         function openSidebar() {
                 sidebar.classList.add('open');
                 overlay.classList.add('active');
